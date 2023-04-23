@@ -5,7 +5,7 @@ use std::{
     thread,
 };
 
-use crate::utils::{get_www_dir, ERR_HTML};
+use crate::utils::{get_www_dir, DIR_HTML, ERR_HTML};
 
 pub struct Server {
     host: String,
@@ -50,7 +50,20 @@ impl Server {
                         stream.write_all(contents.as_bytes()).unwrap();
                     } else {
                         let paths = std::fs::read_dir(full_path).unwrap();
-                        println!("Paths: {:?}", paths.collect::<Vec<_>>());
+                        let mut lis = String::new();
+                        for path in paths {
+                            let path = path.unwrap().path();
+                            let path = path.file_name().unwrap().to_str().unwrap();
+                            lis.push_str(format!("<li>{}</li>\n\t", path).as_str());
+                        }
+                        stream
+                            .write_all(
+                                DIR_HTML
+                                    .replace("{:1}", path)
+                                    .replace("{:2}", lis.as_str())
+                                    .as_bytes(),
+                            )
+                            .unwrap();
                     }
                 }
             }
