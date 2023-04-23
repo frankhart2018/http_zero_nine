@@ -1,16 +1,16 @@
 use std::{
-    io::Read,
+    io::{Read, Write},
     net::{TcpListener, TcpStream},
     path::PathBuf,
     thread,
 };
 
+use crate::utils::{get_www_dir, ERR_HTML};
+
 pub struct Server {
     host: String,
     port: u16,
 }
-
-const WWW_DIR: &str = "~/.www";
 
 impl Server {
     pub fn new(host: String, port: u16) -> Self {
@@ -20,18 +20,34 @@ impl Server {
     fn handle_client(stream: &mut TcpStream) {
         println!("New client: {}", stream.peer_addr().unwrap());
 
-        let mut buf = String::new();
-        stream.read_to_string(&mut buf).unwrap();
-        println!("Request: {}", buf);
+        // Receive GET PATH
+        let mut buffer = [0; 1024];
+        stream.read(&mut buffer).unwrap();
+        let request = String::from_utf8_lossy(&buffer[..]).to_string();
+        println!("Request: {}", request);
 
-        let buf_split = buf.split_whitespace().collect::<Vec<&str>>();
-        let method = buf_split[0];
-        let path = buf_split[1];
+        let request_split = request.split_whitespace().collect::<Vec<&str>>();
+        let method = request_split[0];
+        let path = request_split[1];
 
         match method {
             "GET" => {
-                let path = PathBuf::from(WWW_DIR).join(path);
-                println!("Path: {}", path.display());
+                let full_path = PathBuf::from(get_www_dir()).join(path);
+
+                if !full_path.exists() {
+                    stream
+                        .write_all(
+                            ERR_HTML
+                                .replace("{}", format!("{} not found", path).as_str())
+                                .as_bytes(),
+                        )
+                        .unwrap();
+                } else {
+                    let mut file = std::fs::File::open(full_path).unwrap();
+                    let mut contents = String::new();
+                    file.read_to_string(&mut contents).unwrap();
+                    stream.write_all(contents.as_bytes()).unwrap();
+                }
             }
             _ => {
                 eprintln!("Error: Method not supported");

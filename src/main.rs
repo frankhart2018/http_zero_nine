@@ -23,11 +23,20 @@ fn main() {
         None,
         ArgumentType::BOOL,
     );
+    parser.add_argument(
+        "-p",
+        "--path",
+        "Path for GET",
+        false,
+        None,
+        ArgumentType::STR,
+    );
 
     let args = parser.parse_args().unwrap();
 
     let server = args.get("server").unwrap().get_bool();
     let client = args.get("client").unwrap().get_bool();
+    let path = args.get("path").unwrap().get_str();
 
     if !server && !client {
         eprintln!(
@@ -41,8 +50,17 @@ fn main() {
         server.start();
     } else if !server && client {
         println!("Running client");
+
+        if path == "" {
+            eprintln!(
+                "{} You must specify a path for GET (-p/--path)",
+                "Error:".red().bold()
+            );
+            exit(1);
+        }
+
         let client = Client::new("127.0.0.1".to_string(), 8080);
-        client.start("index.html".to_string());
+        client.start(path);
     } else {
         eprintln!(
             "{} You cannot specify both server (-s/--server) and client (-c/--client)",
