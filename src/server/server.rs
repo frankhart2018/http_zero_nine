@@ -43,10 +43,15 @@ impl Server {
                         )
                         .unwrap();
                 } else {
-                    let mut file = std::fs::File::open(full_path).unwrap();
-                    let mut contents = String::new();
-                    file.read_to_string(&mut contents).unwrap();
-                    stream.write_all(contents.as_bytes()).unwrap();
+                    if full_path.is_file() {
+                        let mut file = std::fs::File::open(full_path).unwrap();
+                        let mut contents = String::new();
+                        file.read_to_string(&mut contents).unwrap();
+                        stream.write_all(contents.as_bytes()).unwrap();
+                    } else {
+                        let paths = std::fs::read_dir(full_path).unwrap();
+                        println!("Paths: {:?}", paths.collect::<Vec<_>>());
+                    }
                 }
             }
             _ => {

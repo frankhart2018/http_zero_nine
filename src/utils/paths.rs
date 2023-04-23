@@ -27,3 +27,16 @@ pub const ERR_HTML: &str = "
     <p>{}</p>
 </body>
 ";
+
+pub const DIR_HTML: &str = "
+<html>
+<head>
+    <title>Index of {:1}</title>
+</head>
+<body>
+    <h1>Index of {:1}</h1>
+    <ul>
+        {:2}
+    </ul>
+</body>
+";
